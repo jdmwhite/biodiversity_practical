@@ -1,17 +1,9 @@
----
-title: 'Practical 13: Biodiversity and Productivity'
-subtitle: 'APES2039A'
-author: "Dr. Joseph White"
-date: "03/06/2022"
-output:
-  pdf_document: 
-    highlight: default
-    toc: true
-    toc_depth: 3
-    number_sections: true
----
+# Practical 13: Biodiversity and Productivity
+### APES2039A
+Dr. Joseph White
+03/06/2022
 
-# Biodiversity and Productivity
+## Biodiversity and Productivity
 
 In this practical we will explore the relationships between different types of biodiversity (species richness, functional diversity, phylogenetic diversity) and productivity (Net Primary Productivity).
 
@@ -26,7 +18,7 @@ The [MODIS NPP dataset](https://lpdaac.usgs.gov/products/mod17a3hgfv006/) provid
 
 The data for both POSA and NPP is subsetted to only include values for the grassland biome of South Africa. These are linked to a location across the country in the form of a grid system referred to as a Quarter Degree Square (QDS). Each grid cell is roughly 30 x 30 km in size.
 
-# If you would like to follow along and run the code yourself
+## If you would like to follow along and run the code yourself
 
 Go to [R Studio Cloud](https://rstudio.cloud/). Either **Sign Up** or as you have already run a practical here before, **Log In** to your account. Once you have logged in, click on **New Project** in the top right corner. Select **New Project from Git Repository**. Copy and paste this link into the open space: https://github.com/jdmwhite/practical_13_biodiversity
 
