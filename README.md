@@ -25,3 +25,7 @@ Go to [R Studio Cloud](https://rstudio.cloud/). Either **Sign Up** or as you hav
 Wait for the project to deploy (this may take a couple of minutes). Once it has opened, click on the `Prac_13_Biodiversity.R` file. You can now run the code, either using (Cntrl + ENTER) or click the **Run** button in the top middle of your screen.
 
 Make sure to **LOG OUT** of your R Studio Cloud session when you are finished using the platform. You are granted 25 free hours per month. But these hours will be depleted quickly if you don't log out!
+
+#### Full markdown
+
+Find the full practical 13 markdown [HERE](https://github.com/jdmwhite/practical_13_biodiversity/blob/main/Prac_13_Biodiversity.md)
