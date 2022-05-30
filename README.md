@@ -3,7 +3,7 @@
 Dr. Joseph White
 03/06/2022
 
-## Biodiversity and Productivity
+## Background
 
 In this practical we will explore the relationships between different types of biodiversity (species richness, functional diversity, phylogenetic diversity) and productivity (Net Primary Productivity).
 
