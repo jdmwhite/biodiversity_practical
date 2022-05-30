@@ -1,0 +1,364 @@
+---
+title: 'Practical 13: Biodiversity and Productivity'
+subtitle: 'APES2039A'
+author: "Dr. Joseph White"
+date: "03/06/2022"
+output:
+  md_document: 
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Background
+
+In this practical we will explore the relationships between different types of biodiversity (species richness, functional diversity, phylogenetic diversity) and productivity (Net Primary Productivity).
+
+We will make use of two different datasets. 
+
+1) Plants of South Africa (POSA) specimen and habit dataset
+2) MODIS Terra satellite's derived annual Net Primary Productivity (NPP) at 500m pixel resolution.
+
+The [POSA specimen and habit dataset](http://posa.sanbi.org/) is an extensive collection of plant samples with locations from all of South Africa collected over more than 200 years. These include herbarium records and verified observations amongst others. Additionally, this dataset has information on the type of habit a plant has (e.g. tree, shrub, herb), which we will use as our functional type data.
+
+The [MODIS NPP dataset](https://lpdaac.usgs.gov/products/mod17a3hgfv006/) provides annual derived productivity values across the globe. The dataset represents the average NPP values from 2001-2021.
+
+The data for both POSA and NPP is subsetted to only include values for the grassland biome of South Africa. These are linked to a location across the country in the form of a grid system referred to as a Quarter Degree Square (QDS). Each grid cell is roughly 30 x 30 km in size.
+
+This document provides the code and output (summary values, maps, figures and tables) that you will work from to extract the relevant answers. All of the answers you require for your Practical 13 worksheet submission will be found in **this document**, your lecture notes from **Week 14 Lecture 3 Functional consequences of biodiversity** and **your own experience and understanding** of sampling field data.
+
+# If you would like to follow along and run the code yourself
+
+Go to [R Studio Cloud](https://rstudio.cloud/). Either **Sign Up** or as you have already run a practical here before, **Log In** to your account. 
+
+![](img/img1.png)
+
+Once you have logged in, click on **New Project** in the top right corner. Select **New Project from Git Repository**. Copy and paste this link into the open space: https://github.com/jdmwhite/practical_13_biodiversity
+
+![](img/img3.png)
+
+![](img/img4.png)
+
+Wait for the project to deploy (this may take a couple of minutes). Once it has opened, click on the `Prac_13_Biodiversity.R` file. 
+
+![](img/img5.png)
+
+You can now run the code, either using (Cntrl + ENTER) or click the **Run** button in the top middle of your screen.
+
+![](img/img6.png)
+
+Make sure to **LOG OUT** of your R Studio Cloud session when you are finished using the platform. You are granted 25 free hours per month. But these hours will be depleted quickly if you don't log out!
+
+Let's now take a look at the code:
+
+## Install and load libraries
+
+The first step in most coding languages is to install and load the libraries (normally called `packages`). These packages have special functions, which users created for specific tasks. The huge variety of R packages are one of the major reasons R is so popular with the ecology community. 
+
+```{r load libraries, message = FALSE, warning=FALSE, results=FALSE}
+#### Load libraries ----
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(effects)
+library(stargazer)
+```
+
+Now we will load in the data. The POSA data is stored in a csv file. This file type is similar to an excel file, but is more efficient in its use of space.
+
+We will also load in the QDS and covariate dataset. This is a **shapefile**, which is a *spatial* file format. It is a table, with each row representing one grid cell (QDS). The columns include variables associated with each QDS. Then there is a special column called **geometry**. This represents the *spatial* component of the table, and tells R where each polygon or point is found in space. 
+
+We will also load the South African border **shapefile** for our maps.
+
+```{r load data, message = FALSE, results = FALSE}
+#### Load in data ----
+# POSA richness
+posa_rich <- read_csv('data/posa_richness.csv')
+
+# QDS and covariates
+qds_cov <- read_sf('data/grass_qds_cov.shp')
+
+# Map of SA
+sa <- read_sf('data/SA_border/SA_border.shp')
+```
+
+## Explore the data
+
+### POSA data
+
+Now that the data is loaded into our **working environment**, let's take a look at it:
+
+```{r explore POSA data}
+#### Explore the data ----
+#### Plants of SA data ----
+
+# Take a look at the data
+posa_rich
+```
+
+As we can see it is a big dataset! 86859 rows and 7 columns. By default R only shows us the first 10 rows. We have information about the QDS (the grid cell the species is found in), the taxon name, the plant family, the functional type, and then summary information for each QDS on the species richness, functional diversity and phylogenetic diversity.
+
+Next, let's count what the most common species across all of the QDSs is. We will use the `count()` function and `arrange()` function. `count()` tells us how many times each species name is found. `arrange()` then sorts this for us. We use a negative sign to tell R we would like the result in *descending* order.
+
+```{r explore POSA data 1}
+# What is the species found in most Quarter Degree Square (QDS)?
+posa_rich %>% count(Taxon) %>% arrange(-n)
+```
+
+We will now continue to look at different summary metrics for our POSA dataset.
+
+How many different plant families are there?
+
+```{r explore POSA data 2}
+# How many different plant families are there?
+n_distinct(posa_rich$Family)
+```
+
+What are the different functional types? To make R print out more rows, we specify `n = 29` within the `print` function.
+
+```{r explore POSA data 3}
+# What different functional types are there?
+posa_rich %>% distinct(func_type) -> functional_types
+print(functional_types, n = 29)
+```
+
+What is the most common functional type? Again, we use the `count()` and `arrange()` functions.
+
+```{r explore POSA data 4}
+# What is the most common functional type?
+posa_rich %>% count(func_type) %>% arrange(-n)
+```
+
+Before we do any analysis of our data, it is important to consider whether our data is **normally distributed** or not. This is due to the *assumptions* that some models, such as linear regression make. Your input data does not necessarily need to be normally distributed, but rather your prediction error (or residuals). If you want to learn more on this, look [HERE](https://towardsdatascience.com/is-normal-distribution-necessary-in-regression-how-to-track-and-fix-it-494105bc50dd). We will log-transform our species richness data to use later in our regression analysis.
+
+```{r explore POSA data 5}
+# Is the richness data normally distributed?
+hist(posa_rich$spp_rich, xlab = 'Species Richness', 
+     main = 'Histogram of Species Richness')
+hist(log(posa_rich$spp_rich), xlab = 'log(Species Richness)', 
+     main = 'Histogram of log-transformed Species Richness')
+```
+
+### NPP data
+
+Now we have an idea of what's inside our POSA data. Let's look at our Net Primary Productivity data, which is stored in the QDS shapefile:
+
+```{r explore QDS data}
+#### Spatial data (QDS) ----
+qds_cov
+```
+
+There are 510 different grid cells, each with its own associated covariate data (i.e. other columns with environmental values). You should also notice the `geometry` column, which includes the coordinates of each grid cell.
+
+Using the flexible `ggplot2` package, we will now make some figures First, plot the QDSs on top of the South Africa border to see where our data is found within the country. We simply specify `geom_sf` (a geometry feature, plotted in `ggplot2` using the `sf` package extension). We tell each `geom_sf` **layer** which data to plot (**sa** and then **qds_cov**). The order is important. Each layer plots on top of the next. So in this case `geom_sf(data = qds_cov)` will plot on top of the `geom_sf(data = sa)` layer.
+
+```{r explore QDS data 1}
+# Where are our grids inside SA?
+ggplot() +
+  geom_sf(data = sa) +
+  geom_sf(data = qds_cov)
+```
+
+Each QDS is associated with a **unique identifying code**. The code represents the latitude and longitude of the grid and then which block this falls in to. There are 16 blocks within each combination of one degree of latitude and longitude, respectively. These are represented by letters. The top left block within each one degree is A. The smaller block within is AA. The bottom right block is DD and so on. Let's plot this to try and visualise it by labeling each QDS:
+
+```{r explore QDS data 2, warning = FALSE}
+# What are the labels of our grids?
+ggplot() +
+  geom_sf(data = qds_cov) +
+  geom_sf_label(data = qds_cov, aes(label = QDS), size = 1)
+```
+
+We can now visualise our Net Primary Productivity (NPP) layer. We have the core of our code. But now we will add in a mapping aesthetic (or `aes()`). In this case we want each cell to be filled by the corresponding value of NPP. Then we can chose a colour gradient to fill this in with (white to darkgreen) and give our legend a good label (NPP (kg C/m2/yr)). We can also change the x and y labels using `labs()` and lastly edit the overall theme of the plot/map using a present function called `theme_bw()`.
+
+```{r explore QDS data 3}
+# NPP
+ggplot() +
+  geom_sf(data = qds_cov, aes(fill = NPP), lwd = 0) +
+  scale_fill_gradient2(low = 'white', high = 'darkgreen',
+                       name = 'NPP\n(kg C/m2/yr)') +
+  labs(x = 'Longitude', y = 'Latitude') +
+  theme_bw() 
+```
+
+What spatial trends do you see in the NPP data? Let's now plot the NPP variability layer. This uses the same copy and pasted code from above. We have just changed the fill variable in `aes()`, the colour gradient (white to darkblue) and the legend label. What spatial trends do you see in the NPP variability data?
+
+```{r explore QDS data 4}
+ggplot() +
+  geom_sf(data = qds_cov, aes(fill = NPP_var), lwd = 0) +
+  scale_fill_gradient2(low = 'white', high = 'darkblue',
+                       name = 'NPP variability\n(kg C/m2/yr)') +
+  labs(x = 'Longitude', y = 'Latitude') +
+  theme_bw()
+```
+
+## Clean the data
+
+The next step is to clean the data a bit further. In the POSA data, we only want one row per QDS. To do this we run the `distinct()` function. Next we `select()` only the columns we want. Lastly, take a look at each dataset. 
+
+```{r clean the data}
+#### Clean the data and join it together ----
+# only select one row for each QDS
+posa_rich %>% distinct(QDS, .keep_all = TRUE) -> posa_rich
+
+# select the columns we want
+posa_rich %>% select(QDS, spp_rich, func_diversity, phylog_diversity) -> posa_rich
+
+# join the two datasets together
+# reminder of each dataset
+head(posa_rich)
+head(qds_cov)
+```
+
+### Join the datasets
+
+Both datasets have a column with the unique QDS identifier. We will use this to column to join them together with the `left_join()` function. Lastly, `select()` the columns we want to use and `filter()` out any columns that have no species richness data.
+
+```{r join dataframes}
+# join the two datasets based on the shared column 'QDS'
+qds_cov %>% left_join(posa_rich, by = 'QDS') %>%
+  select(QDS:NPP_var, spp_rich:phylog_diversity, geometry) %>%
+  filter(!is.na(spp_rich)) -> joined_data
+```
+
+## Analyse the data
+
+After loading, exploring and cleaning, we can now begin to analyse the trends in the data. Let's make some figures to explore the relationships between the variables.
+
+### Species richness vs. functional diversity
+
+```{r analyse data with plots 1, message=FALSE}
+#### Analyse the data ----
+
+# 1) Species richness vs. functional diversity
+ggplot(data = joined_data, aes(x = spp_rich, y = func_diversity)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(x = 'Species Richness', y = 'Functional Diversity') +
+  theme_bw()
+```
+
+What relationship do you see between species richness and functional diversity?
+
+### Species richness vs. phylogenetic diversity
+
+```{r analyse data with plots 2, message=FALSE}
+# 2) Species richness vs. Phylogenetic Diversity
+ggplot(data = joined_data, aes(x = spp_rich, y = phylog_diversity)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(x = 'Species Richness', y = 'Phylogenetic Diversity') +
+  theme_bw()
+```
+
+### Species richness vs. NPP
+
+```{r analyse data with plots 3, message=FALSE}
+# 3) Species richness vs. NPP
+ggplot(data = joined_data, aes(x = spp_rich, y = NPP)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(x = 'Species Richness', y = 'NPP (kg C/m2/yr)') +
+  theme_bw()
+```
+
+The raw data looks a bit messy. The modelled predictions in Section 2.5 will make these patterns clearer. 
+
+### Functional diversity vs. NPP
+
+```{r analyse data with plots 4, message=FALSE}
+# 4) Functional Diversity vs. NPP
+ggplot(data = joined_data, aes(x = func_diversity, y = NPP)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(x = 'Functional Diversity', y = 'NPP (kg C/m2/yr)') +
+  theme_bw()
+```
+
+Again, the raw data looks a bit messy. The modelled predictions in Section 2.5 will make these patterns clearer. 
+
+### Species richness vs. NPP variability
+
+```{r analyse data with plots 5, message=FALSE}
+# 5) Species richness vs. NPP variability
+ggplot(data = joined_data, aes(x = spp_rich, y = NPP_var)) +
+  geom_point() +
+  geom_smooth(se = F) +
+  labs(x = 'Species Richness', y = 'NPP variability (kg C/m2/yr)') +
+  theme_bw()
+```
+
+There does not seem to be a clear trend in the species richness versus NPP variability plot. So we will stick to only analysing the relationships between NPP and 1) species richness and 2) functional diversity, for our linear models.
+
+## Run a linear model
+
+To statistically analyse the relationships between our variables we will use linear models/regressions. These models will explain the relationships between our dependent (response) variables and our independent (predictor) variables. Think of these as a straight line equation: 
+
+$$
+y = mx + c
+$$
+
+In this equation, $$y$$ is your response variable and $$x$$ is predictor variable. $$m$$ represents your slope or gradient. In R, it will be stored under the **coefficient** output using the `summary` function. $$c$$ represents your intercept. 
+
+To run a linear model in R, we simply call the `lm()` function. Inside it, we need to specify our formula, which is `NPP ~ log(spp_rich)`, and the dataset we are using: `joined_data`.
+
+### NPP versus species richness
+
+```{r linear model 1}
+#### run a linear model ----
+# 1) What is the statistical relationship between NPP and species richness? 
+model1 <- lm(NPP ~ log(spp_rich), data = joined_data)
+# look at regression coefficients
+summary(model1)
+
+# Plot the predicted relationship between NPP and species richness
+plot(allEffects(model1), ylim = c(0,1)) 
+```
+
+Take a careful look at the `summary()` output and identify the important values, such as the **coefficient estimates** and the **R^2 (R-squared)**.
+
+Lastly, we use the `plot(allEffects())` nested functions to produce the predicted slope from our model.
+
+What is the **predicted** relationship between NPP and species richness?
+
+### NPP versus functional diversity
+
+Now do the same thing for NPP and functional diversity.
+
+```{r linear model 2}
+# 2) What is the statistical relationship between NPP and functional diversity? 
+model2 <- lm(NPP ~ log(func_diversity), data = joined_data)
+# look at regression coefficients
+summary(model2)
+
+# Plot the predicted relationship between NPP and functional diversity
+plot(allEffects(model2), ylim = c(0,1))
+```
+
+What is the **predicted** relationship between NPP and functional diversity?
+
+## Linear model summaries
+
+The outputs from `summary()` can look a bit messy. To tidy this up and provide a neater output, we will use the `stargazer()` function. 
+
+```{r linear models summary}
+#### Summaries of linear models ----
+# This function provides a neat summary of the regressions for both models
+stargazer(model1, model2, type = 'text')
+```
+
+These are the same values from our earlier outputs using `summary()`, but they are organised in a much better way for reading.
+
+## Submission
+
+Your submission for this practical needs to be:
+
+* Answer the 9 questions in the Practical 13 worksheet.
+
+* Submit a word document (.docx) format.
+
+* Submit by 10 June 17h00.
