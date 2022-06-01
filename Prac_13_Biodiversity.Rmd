@@ -4,7 +4,7 @@ subtitle: 'APES2039A'
 author: "Dr. Joseph White"
 date: "03/06/2022"
 output:
-  md_document: 
+  pdf_document: 
     toc: true
     toc_depth: 3
     number_sections: true
@@ -33,6 +33,8 @@ This document provides the code and output (summary values, maps, figures and ta
 
 # If you would like to follow along and run the code yourself
 
+## R Studio Cloud
+
 Go to [R Studio Cloud](https://rstudio.cloud/). Either **Sign Up** or as you have already run a practical here before, **Log In** to your account. 
 
 ![](img/img1.png)
@@ -53,7 +55,15 @@ You can now run the code, either using (Cntrl + ENTER) or click the **Run** butt
 
 Make sure to **LOG OUT** of your R Studio Cloud session when you are finished using the platform. You are granted 25 free hours per month. But these hours will be depleted quickly if you don't log out!
 
-Let's now take a look at the code:
+## R Studio run locally on your computer
+
+* Step 1: Download R: https://cran.r-project.org/ (select the correct operating system for your computer)
+
+* Step 2: Download R Studio: https://www.rstudio.com/products/rstudio/download/#download (select the correct operating system for your computer)
+
+Once you have download and installed both, all you need is to open R Studio. The next step is to go to https://github.com/jdmwhite/practical_13_biodiversity, click **"Code"** in the top right corner and the click **"Download ZIP"**. Unzip this file, by double-clicking on it, and then open the **practical_13_biodiversity.Rproj** file. Make sure to open the file with the **.Rproj** file extension. This will automatically open R Studio and begin your session. Once it has opened, click on the `Prac_13_Biodiversity.R` file. You can now run the code, either using (Cntrl + ENTER) or click the **Run** button in the top middle of your screen (as shown above in the R Studio Cloud example).
+
+# Let's code
 
 ## Install and load libraries
 
@@ -357,7 +367,7 @@ These are the same values from our earlier outputs using `summary()`, but they a
 
 Your submission for this practical needs to be:
 
-* Answer the 9 questions in the Practical 13 worksheet.
+* Answer the 9 questions in the [Practical 13 worksheet](https://ulwazi.wits.ac.za/courses/35082/files/folder/Practicals/Prac%2013?preview=3558694).
 
 * Submit in word document (.docx) format.
 
