@@ -1,31 +1,4 @@
--   [1 Background](#background)
--   [2 If you would like to follow along and run the code
-    yourself](#if-you-would-like-to-follow-along-and-run-the-code-yourself)
-    -   [2.1 Install and load libraries](#install-and-load-libraries)
-    -   [2.2 Explore the data](#explore-the-data)
-        -   [2.2.1 POSA data](#posa-data)
-        -   [2.2.2 NPP data](#npp-data)
-    -   [2.3 Clean the data](#clean-the-data)
-        -   [2.3.1 Join the datasets](#join-the-datasets)
-    -   [2.4 Analyse the data](#analyse-the-data)
-        -   [2.4.1 Species richness vs. functional
-            diversity](#species-richness-vs.-functional-diversity)
-        -   [2.4.2 Species richness vs. phylogenetic
-            diversity](#species-richness-vs.-phylogenetic-diversity)
-        -   [2.4.3 Species richness vs. NPP](#species-richness-vs.-npp)
-        -   [2.4.4 Functional diversity
-            vs. NPP](#functional-diversity-vs.-npp)
-        -   [2.4.5 Species richness vs. NPP
-            variability](#species-richness-vs.-npp-variability)
-    -   [2.5 Run a linear model](#run-a-linear-model)
-        -   [2.5.1 NPP versus species
-            richness](#npp-versus-species-richness)
-        -   [2.5.2 NPP versus functional
-            diversity](#npp-versus-functional-diversity)
-    -   [2.6 Linear model summaries](#linear-model-summaries)
-    -   [2.7 Submission](#submission)
-
-# 1 Background
+# Background
 
 In this practical we will explore the relationships between different
 types of biodiversity (species richness, functional diversity,
@@ -61,7 +34,9 @@ submission will be found in **this document**, your lecture notes from
 **Week 14 Lecture 3 Functional consequences of biodiversity** and **your
 own experience and understanding** of sampling field data.
 
-# 2 If you would like to follow along and run the code yourself
+# If you would like to follow along and run the code yourself
+
+## R Studio Cloud
 
 Go to [R Studio Cloud](https://rstudio.cloud/). Either **Sign Up** or as
 you have already run a practical here before, **Log In** to your
@@ -92,9 +67,30 @@ Make sure to **LOG OUT** of your R Studio Cloud session when you are
 finished using the platform. You are granted 25 free hours per month.
 But these hours will be depleted quickly if you don’t log out!
 
-Let’s now take a look at the code:
+## R Studio run locally on your computer
 
-## 2.1 Install and load libraries
+-   Step 1: Download R: <https://cran.r-project.org/> (select the
+    correct operating system for your computer)
+
+-   Step 2: Download R Studio:
+    <https://www.rstudio.com/products/rstudio/download/#download>
+    (select the correct operating system for your computer)
+
+Once you have download and installed both, all you need is to open R
+Studio. The next step is to go to
+<https://github.com/jdmwhite/practical_13_biodiversity>, click
+**“Code”** in the top right corner and the click **“Download ZIP”**.
+Unzip this file, by double-clicking on it, and then open the
+**practical\_13\_biodiversity.Rproj** file. Make sure to open the file
+with the **.Rproj** file extension. This will automatically open R
+Studio and begin your session. Once it has opened, click on the
+`Prac_13_Biodiversity.R` file. You can now run the code, either using
+(Cntrl + ENTER) or click the **Run** button in the top middle of your
+screen (as shown above in the R Studio Cloud example).
+
+# Let’s code
+
+## Install and load libraries
 
 The first step in most coding languages is to install and load the
 libraries (normally called `packages`). These packages have special
@@ -133,9 +129,9 @@ We will also load the South African border **shapefile** for our maps.
     # Map of SA
     sa <- read_sf('data/SA_border/SA_border.shp')
 
-## 2.2 Explore the data
+## Explore the data
 
-### 2.2.1 POSA data
+### POSA data
 
 Now that the data is loaded into our **working environment**, let’s take
 a look at it:
@@ -284,7 +280,7 @@ regression analysis.
 
 ![](Prac_13_Biodiversity_files/figure-markdown_strict/explore%20POSA%20data%205-2.png)
 
-### 2.2.2 NPP data
+### NPP data
 
 Now we have an idea of what’s inside our POSA data. Let’s look at our
 Net Primary Productivity data, which is stored in the QDS shapefile:
@@ -382,7 +378,7 @@ in the NPP variability data?
 
 ![](Prac_13_Biodiversity_files/figure-markdown_strict/explore%20QDS%20data%204-1.png)
 
-## 2.3 Clean the data
+## Clean the data
 
 The next step is to clean the data a bit further. In the POSA data, we
 only want one row per QDS. To do this we run the `distinct()` function.
@@ -427,7 +423,7 @@ dataset.
     ## 5 2430DD 1035.    268.  1.49   0.113  ((31 -25, 30.91667 -25, 30.83333 -25, 30.…
     ## 6 2525DB  568.     31.3 0.402  0.0762 ((26 -25.75, 25.91667 -25.75, 25.83333 -2…
 
-### 2.3.1 Join the datasets
+### Join the datasets
 
 Both datasets have a column with the unique QDS identifier. We will use
 this to column to join them together with the `left_join()` function.
@@ -439,13 +435,13 @@ columns that have no species richness data.
       select(QDS:NPP_var, spp_rich:phylog_diversity, geometry) %>%
       filter(!is.na(spp_rich)) -> joined_data
 
-## 2.4 Analyse the data
+## Analyse the data
 
 After loading, exploring and cleaning, we can now begin to analyse the
 trends in the data. Let’s make some figures to explore the relationships
 between the variables.
 
-### 2.4.1 Species richness vs. functional diversity
+### Species richness vs. functional diversity
 
     #### Analyse the data ----
 
@@ -461,7 +457,7 @@ between the variables.
 What relationship do you see between species richness and functional
 diversity?
 
-### 2.4.2 Species richness vs. phylogenetic diversity
+### Species richness vs. phylogenetic diversity
 
     # 2) Species richness vs. Phylogenetic Diversity
     ggplot(data = joined_data, aes(x = spp_rich, y = phylog_diversity)) +
@@ -472,7 +468,7 @@ diversity?
 
 ![](Prac_13_Biodiversity_files/figure-markdown_strict/analyse%20data%20with%20plots%202-1.png)
 
-### 2.4.3 Species richness vs. NPP
+### Species richness vs. NPP
 
     # 3) Species richness vs. NPP
     ggplot(data = joined_data, aes(x = spp_rich, y = NPP)) +
@@ -486,7 +482,7 @@ diversity?
 The raw data looks a bit messy. The modelled predictions in Section 2.5
 will make these patterns clearer.
 
-### 2.4.4 Functional diversity vs. NPP
+### Functional diversity vs. NPP
 
     # 4) Functional Diversity vs. NPP
     ggplot(data = joined_data, aes(x = func_diversity, y = NPP)) +
@@ -500,7 +496,7 @@ will make these patterns clearer.
 Again, the raw data looks a bit messy. The modelled predictions in
 Section 2.5 will make these patterns clearer.
 
-### 2.4.5 Species richness vs. NPP variability
+### Species richness vs. NPP variability
 
     # 5) Species richness vs. NPP variability
     ggplot(data = joined_data, aes(x = spp_rich, y = NPP_var)) +
@@ -516,7 +512,7 @@ NPP variability plot. So we will stick to only analysing the
 relationships between NPP and 1) species richness and 2) functional
 diversity, for our linear models.
 
-## 2.5 Run a linear model
+## Run a linear model
 
 To statistically analyse the relationships between our variables we will
 use linear models/regressions. These models will explain the
@@ -541,7 +537,7 @@ To run a linear model in R, we simply call the `lm()` function. Inside
 it, we need to specify our formula, which is `NPP ~ log(spp_rich)`, and
 the dataset we are using: `joined_data`.
 
-### 2.5.1 NPP versus species richness
+### NPP versus species richness
 
     #### run a linear model ----
     # 1) What is the statistical relationship between NPP and species richness? 
@@ -582,7 +578,7 @@ predicted slope from our model.
 
 What is the **predicted** relationship between NPP and species richness?
 
-### 2.5.2 NPP versus functional diversity
+### NPP versus functional diversity
 
 Now do the same thing for NPP and functional diversity.
 
@@ -618,7 +614,7 @@ Now do the same thing for NPP and functional diversity.
 What is the **predicted** relationship between NPP and functional
 diversity?
 
-## 2.6 Linear model summaries
+## Linear model summaries
 
 The outputs from `summary()` can look a bit messy. To tidy this up and
 provide a neater output, we will use the `stargazer()` function.
@@ -655,11 +651,12 @@ provide a neater output, we will use the `stargazer()` function.
 These are the same values from our earlier outputs using `summary()`,
 but they are organised in a much better way for reading.
 
-## 2.7 Submission
+## Submission
 
 Your submission for this practical needs to be:
 
--   Answer the 9 questions in the Practical 13 worksheet.
+-   Answer the 9 questions in the [Practical 13
+    worksheet](https://ulwazi.wits.ac.za/courses/35082/files/folder/Practicals/Prac%2013?preview=3558694).
 
 -   Submit in word document (.docx) format.
 
